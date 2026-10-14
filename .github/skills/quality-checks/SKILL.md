@@ -142,3 +142,7 @@ npx vitest run src/lib/games.test.ts
 3. Run unit tests (if data layer / helpers changed): `npm run test:unit`
 4. Verify new functionality has appropriate unit test coverage
 5. Confirm no unit tests were broken, skipped, or disabled
+
+## 결과 보고 형식
+
+작업이 끝나면 실행한 각 명령과 통과, 실패, 차단 여부를 보고합니다. 도구에서 보고한 경우에만 테스트 수, 실행 시간, 오류, 경고, 기타 측정값을 포함합니다. 실패 또는 차단된 항목에 대한 다음 조치를 제시하고, 건너뛰거나 완료되지 않은 검사를 통과한 것으로 설명하지 않습니다.
