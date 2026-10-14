@@ -160,9 +160,25 @@ test.describe('Game Filtering', () => {
   test('filter checkboxes are keyboard operable with visible focus', async ({ page }) => {
     const firstCheckbox = page.getByTestId('game-filters').getByRole('checkbox').first();
 
-    await test.step('Tab to and toggle the first filter checkbox with the keyboard', async () => {
-      await firstCheckbox.focus();
+    await test.step('Tab through the page until the first filter checkbox is reached', async () => {
+      // Real Tab presses exercise the actual tab order, unlike a programmatic .focus() call.
+      const maxTabs = 25;
+      for (let i = 0; i < maxTabs; i++) {
+        if (await firstCheckbox.evaluate((el) => el === document.activeElement)) break;
+        await page.keyboard.press('Tab');
+      }
       await expect(firstCheckbox).toBeFocused();
+    });
+
+    await test.step('Verify a visible focus indicator is rendered', async () => {
+      const hasVisibleFocusIndicator = await firstCheckbox.evaluate((el) => {
+        const style = getComputedStyle(el);
+        return style.boxShadow !== 'none' || style.outlineStyle !== 'none';
+      });
+      expect(hasVisibleFocusIndicator).toBe(true);
+    });
+
+    await test.step('Toggle the checkbox with the keyboard', async () => {
       await page.keyboard.press('Space');
       await expect(firstCheckbox).toBeChecked();
     });

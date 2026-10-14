@@ -143,6 +143,6 @@ npx vitest run src/lib/games.test.ts
 4. Verify new functionality has appropriate unit test coverage
 5. Confirm no unit tests were broken, skipped, or disabled
 
-## 결과 보고 형식
+## Result Reporting Format
 
-작업이 끝나면 실행한 각 명령과 통과, 실패, 차단 여부를 보고합니다. 도구에서 보고한 경우에만 테스트 수, 실행 시간, 오류, 경고, 기타 측정값을 포함합니다. 실패 또는 차단된 항목에 대한 다음 조치를 제시하고, 건너뛰거나 완료되지 않은 검사를 통과한 것으로 설명하지 않습니다.
+When the work is done, report each command that was run along with whether it passed, failed, or was blocked. Include test counts, run durations, errors, warnings, and other metrics only when the tool itself reported them. Propose next steps for any failed or blocked items, and never describe a skipped or incomplete check as passing.
