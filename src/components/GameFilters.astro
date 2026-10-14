@@ -1,0 +1,141 @@
+---
+import type { Category, Publisher } from '../types/game';
+
+interface Props {
+    categories: Category[];
+    publishers: Publisher[];
+    /** Total number of games available before any filter is applied. */
+    totalGames: number;
+}
+
+const { categories, publishers, totalGames } = Astro.props;
+---
+
+<div
+    class="mb-8 bg-slate-800/60 backdrop-blur-sm rounded-xl border border-slate-700/50 p-6"
+    data-testid="game-filters"
+>
+    <div class="flex flex-wrap items-start justify-between gap-4 mb-4">
+        <h2 class="text-lg font-medium text-slate-100">Filter games</h2>
+        <button
+            type="button"
+            class="text-sm font-medium text-blue-400 hover:text-blue-300 focus:ring-2 focus:ring-blue-500 focus:outline-none rounded px-2 py-1 transition-colors"
+            data-testid="filter-clear"
+        >
+            Clear filters
+        </button>
+    </div>
+
+    <div class="flex flex-wrap gap-6">
+        <fieldset class="min-w-0">
+            <legend class="text-sm font-medium text-slate-300 mb-2">Category</legend>
+            <div class="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                    <label class="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 cursor-pointer hover:border-blue-500/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 transition-colors">
+                        <input
+                            type="checkbox"
+                            value={category.id}
+                            data-filter-type="category"
+                            class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            data-testid={`filter-category-${category.id}`}
+                        />
+                        {category.name}
+                    </label>
+                ))}
+            </div>
+        </fieldset>
+
+        <fieldset class="min-w-0">
+            <legend class="text-sm font-medium text-slate-300 mb-2">Publisher</legend>
+            <div class="flex flex-wrap gap-2">
+                {publishers.map((publisher) => (
+                    <label class="inline-flex items-center gap-2 bg-slate-900/60 border border-slate-700 rounded-lg px-3 py-1.5 text-sm text-slate-200 cursor-pointer hover:border-blue-500/50 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-blue-500 transition-colors">
+                        <input
+                            type="checkbox"
+                            value={publisher.id}
+                            data-filter-type="publisher"
+                            class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            data-testid={`filter-publisher-${publisher.id}`}
+                        />
+                        {publisher.name}
+                    </label>
+                ))}
+            </div>
+        </fieldset>
+    </div>
+
+    <p class="mt-4 text-sm text-slate-400" role="status" aria-live="polite" data-testid="filter-result-count">
+        Showing all {totalGames} games
+    </p>
+</div>
+
+<script>
+    const panel = document.querySelector<HTMLElement>('[data-testid="game-filters"]');
+    const grid = document.querySelector<HTMLElement>('[data-testid="games-grid"]');
+    const filterEmptyState = document.querySelector<HTMLElement>('[data-testid="filter-empty-state"]');
+    const resultCount = document.querySelector<HTMLElement>('[data-testid="filter-result-count"]');
+    const clearButton = panel?.querySelector<HTMLButtonElement>('[data-testid="filter-clear"]');
+
+    if (panel && grid) {
+        const gridElement = grid;
+        const categoryInputs = Array.from(
+            panel.querySelectorAll<HTMLInputElement>('input[data-filter-type="category"]'),
+        );
+        const publisherInputs = Array.from(
+            panel.querySelectorAll<HTMLInputElement>('input[data-filter-type="publisher"]'),
+        );
+        const cards = Array.from(gridElement.querySelectorAll<HTMLElement>('[data-testid="game-card"]'));
+
+        /**
+         * Reads the checked values from a set of filter checkboxes.
+         *
+         * @param inputs - Checkbox inputs to inspect.
+         * @returns The `value` of each checked input.
+         */
+        function selectedValues(inputs: HTMLInputElement[]): string[] {
+            return inputs.filter((input) => input.checked).map((input) => input.value);
+        }
+
+        /**
+         * Shows/hides game cards based on the currently checked category and
+         * publisher filters, and updates the visible result count/empty state.
+         */
+        function applyFilters(): void {
+            const selectedCategories = selectedValues(categoryInputs);
+            const selectedPublishers = selectedValues(publisherInputs);
+            let visibleCount = 0;
+
+            for (const card of cards) {
+                const categoryId = card.getAttribute('data-category-id') ?? '';
+                const publisherId = card.getAttribute('data-publisher-id') ?? '';
+                const matchesCategory = selectedCategories.length === 0 || selectedCategories.includes(categoryId);
+                const matchesPublisher = selectedPublishers.length === 0 || selectedPublishers.includes(publisherId);
+                const visible = matchesCategory && matchesPublisher;
+                card.classList.toggle('hidden', !visible);
+                if (visible) visibleCount++;
+            }
+
+            gridElement.classList.toggle('hidden', visibleCount === 0);
+            filterEmptyState?.classList.toggle('hidden', visibleCount !== 0);
+            if (resultCount) {
+                resultCount.textContent =
+                    visibleCount === cards.length
+                        ? `Showing all ${cards.length} games`
+                        : `Showing ${visibleCount} of ${cards.length} games`;
+            }
+        }
+
+        panel.addEventListener('change', (event) => {
+            if (event.target instanceof HTMLInputElement) {
+                applyFilters();
+            }
+        });
+
+        clearButton?.addEventListener('click', () => {
+            for (const input of [...categoryInputs, ...publisherInputs]) {
+                input.checked = false;
+            }
+            applyFilters();
+        });
+    }
+</script>
