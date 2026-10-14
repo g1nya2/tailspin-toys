@@ -3,7 +3,7 @@
  *
  * Kept framework-free and side-effect-free so the logic is unit-testable
  * without the Astro runtime (see `ratings.test.ts`). Consumed by the
- * `StarRating.astro` component.
+ * `StarRating.astro` and `GameCard.astro` components.
  */
 
 /**
@@ -29,4 +29,16 @@ export function formatStarRating(rating: number | null): string {
     const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
 
     return '★'.repeat(fullStars) + (halfStar ? '½' : '') + '☆'.repeat(emptyStars);
+}
+
+/**
+ * Builds the compact "x.x / 5" label shown on game listing cards.
+ *
+ * Returns `'No rating yet'` when the rating is `null`. Ratings are clamped
+ * to the 0–5 range and formatted with one decimal place.
+ */
+export function formatCardRatingLabel(rating: number | null): string {
+    if (rating === null) return 'No rating yet';
+
+    return `${clampRating(rating).toFixed(1)} / 5`;
 }
