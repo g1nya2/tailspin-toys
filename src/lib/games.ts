@@ -1,7 +1,7 @@
-import { eq, asc } from 'drizzle-orm';
+import { eq, asc, and, inArray } from 'drizzle-orm';
 import type { Database } from './db';
 import { games, categories, publishers } from '../../db/schema';
-import type { Game } from '../types/game';
+import type { Game, Category, Publisher } from '../types/game';
 
 const gameSelection = {
     id: games.id,
@@ -66,4 +66,63 @@ export async function getAllGameIds(db: Database): Promise<number[]> {
 export async function getGameById(db: Database, id: number): Promise<Game | null> {
     const row = await baseGamesQuery(db).where(eq(games.id, id)).get();
     return row ? mapGame(row) : null;
+}
+
+/**
+ * Fetches every category, for building filter controls.
+ *
+ * @param db - Injectable Drizzle database instance.
+ * @returns All categories ordered by name.
+ */
+export async function getAllCategories(db: Database): Promise<Category[]> {
+    return db.select({ id: categories.id, name: categories.name }).from(categories).orderBy(asc(categories.name));
+}
+
+/**
+ * Fetches every publisher, for building filter controls.
+ *
+ * @param db - Injectable Drizzle database instance.
+ * @returns All publishers ordered by name.
+ */
+export async function getAllPublishers(db: Database): Promise<Publisher[]> {
+    return db.select({ id: publishers.id, name: publishers.name }).from(publishers).orderBy(asc(publishers.name));
+}
+
+/**
+ * Filter criteria for {@link getGamesByFilter}.
+ * Omitted or empty arrays mean "no filter" for that dimension.
+ */
+export interface GameFilter {
+    /** Category ids to match; results include games in any of these categories. */
+    categoryIds?: number[];
+    /** Publisher ids to match; results include games from any of these publishers. */
+    publisherIds?: number[];
+}
+
+/**
+ * Fetches games matching the given filter, ordered by title.
+ * Category ids are OR'd together, publisher ids are OR'd together, and the
+ * two dimensions are AND'd — e.g. categoryIds=[1,2], publisherIds=[3] matches
+ * games in category 1 or 2 AND published by publisher 3.
+ *
+ * @param db - Injectable Drizzle database instance.
+ * @param filter - Category/publisher ids to filter by; defaults to no filtering.
+ * @returns Matching games ordered by title.
+ */
+export async function getGamesByFilter(db: Database, filter: GameFilter = {}): Promise<Game[]> {
+    const conditions: ReturnType<typeof inArray>[] = [];
+    if (filter.categoryIds && filter.categoryIds.length > 0) {
+        conditions.push(inArray(games.categoryId, filter.categoryIds));
+    }
+    if (filter.publisherIds && filter.publisherIds.length > 0) {
+        conditions.push(inArray(games.publisherId, filter.publisherIds));
+    }
+
+    const rows =
+        conditions.length > 0
+            ? await baseGamesQuery(db)
+                  .where(and(...conditions))
+                  .orderBy(asc(games.title))
+            : await baseGamesQuery(db).orderBy(asc(games.title));
+    return rows.map(mapGame);
 }

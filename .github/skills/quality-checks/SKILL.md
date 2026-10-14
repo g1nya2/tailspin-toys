@@ -142,3 +142,7 @@ npx vitest run src/lib/games.test.ts
 3. Run unit tests (if data layer / helpers changed): `npm run test:unit`
 4. Verify new functionality has appropriate unit test coverage
 5. Confirm no unit tests were broken, skipped, or disabled
+
+## Result Reporting Format
+
+When the work is done, report each command that was run along with whether it passed, failed, or was blocked. Include test counts, run durations, errors, warnings, and other metrics only when the tool itself reported them. Propose next steps for any failed or blocked items, and never describe a skipped or incomplete check as passing.
